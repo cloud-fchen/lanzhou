@@ -128,7 +128,9 @@
   }
 
   function statusBadge(day) {
-    if (day.id === 'day-01') return '<span class="badge-row"><span class="status-badge suggested">建议行程</span><span class="status-badge confirmed">含已确认项目</span></span>';
+    const hasConfirmedBooking = data.confirmedHotels.some(hotel => hotel.date === day.date
+      || (hotel.checkOutDate && day.date >= hotel.date && day.date < hotel.checkOutDate));
+    if (hasConfirmedBooking) return '<span class="badge-row"><span class="status-badge suggested">建议行程</span><span class="status-badge confirmed">含已确认项目</span></span>';
     return `<span class="status-badge ${day.status}">${day.status === 'confirmed' ? '已确认' : '建议行程'}</span>`;
   }
 
@@ -209,7 +211,6 @@
 
   function renderVehicle() {
     const vehicle = data.vehicle;
-    const hotel = data.confirmedHotels[0];
     $('#vehicle-card').innerHTML = `
       <article class="vehicle-main">
         <div>
@@ -223,11 +224,13 @@
           <div><dt>还车</dt><dd>${escapeHtml(vehicle.returnAt)}</dd></div>
         </dl>
       </article>
-      <article class="hotel-main">
-        <span class="info-kicker">FIRST NIGHT · 已确认</span>
+      ${data.confirmedHotels.map(hotel => `<article class="hotel-main">
+        <span class="info-kicker">住宿 · 已确认</span>
         <h3>${escapeHtml(hotel.name)}</h3>
-        <p>${formatDate(hotel.date)} · ${escapeHtml(hotel.city)}</p>
-      </article>
+        <p>${formatDate(hotel.date)} 入住${hotel.checkOutDate ? ` — ${formatDate(hotel.checkOutDate)} 退房` : ''} · ${escapeHtml(hotel.city)}</p>
+        ${hotel.nights ? `<p>连住 ${escapeHtml(hotel.nights)} 晚</p>` : ''}
+        ${hotel.address ? `<p>${escapeHtml(hotel.address)}</p>` : ''}
+      </article>`).join('')}
     `;
 
     $('#source-list').innerHTML = `
