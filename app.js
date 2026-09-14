@@ -117,8 +117,8 @@
         ${data.routeStops.map((stop, index) => `
           <li>
             <button type="button" class="stop-button" data-stop-id="${escapeHtml(stop.id)}"
-              data-day-id="${escapeHtml(stop.dayIds[0])}" aria-label="查看${escapeHtml(stop.name)}对应行程">
-              <span>${String(index + 1).padStart(2, '0')}</span>${escapeHtml(stop.name)}
+              data-day-id="${escapeHtml(stop.dayIds[0])}" aria-label="查看${escapeHtml(stop.placeName || stop.name)}对应行程">
+              <span>${String(index + 1).padStart(2, '0')}</span>${escapeHtml(stop.placeName || stop.name)}
             </button>
           </li>
         `).join('')}
@@ -151,6 +151,28 @@
       </li>`).join('')}</ol>
       <p>按计划道路路线计算，不含临时绕行及酒店接驳。</p>
     </div>`;
+  }
+
+  function renderHistoricalHazards(day) {
+    const events = (data.historicalHazards || []).filter(event => event.dayIds.includes(day.id));
+    if (!events.length) return '';
+    return `<details class="hazard-history">
+      <summary><span>历史灾害记录</span><span class="hazard-count">${events.length} 条</span></summary>
+      <div class="hazard-content">
+        <p class="hazard-disclaimer">历史事件记录，不代表当前路况；出发前以交警、交通部门和景区最新通告为准。</p>
+        ${events.map(event => `<article class="hazard-event">
+          <div class="hazard-event-meta"><time datetime="${escapeHtml(event.occurredOn)}">${escapeHtml(event.occurredOn)}</time><span>${escapeHtml(event.type)}</span></div>
+          <h4>${escapeHtml(event.place)}</h4>
+          <p class="hazard-relation">${escapeHtml(event.relation)}</p>
+          <p>${escapeHtml(event.summary)}</p>
+          <p><b>当时处置：</b>${escapeHtml(event.historicalResponse || '来源未披露具体抢通情况。')}</p>
+          <p class="hazard-source">${escapeHtml(event.source.label)} · 报道于 <time datetime="${escapeHtml(event.source.publishedOn)}">${escapeHtml(event.source.publishedOn)}</time>
+            ${/^https:\/\//i.test(event.source.url) ? `<a href="${escapeHtml(event.source.url)}" target="_blank" rel="noopener noreferrer">查看原文 ↗</a>` : ''}
+          </p>
+          <p class="hazard-checked">资料核查于 ${escapeHtml(event.checkedOn)}</p>
+        </article>`).join('')}
+      </div>
+    </details>`;
   }
 
   function renderDays(initialDayId) {
@@ -187,6 +209,7 @@
               <ul>${day.notices.map((notice) => `<li>${escapeHtml(notice)}</li>`).join('')}</ul>
             </div>
           ` : ''}
+          ${renderHistoricalHazards(day)}
         </div>
       </article>
     `).join('');
